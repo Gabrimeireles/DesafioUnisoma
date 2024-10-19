@@ -8,7 +8,7 @@ class Agendamento:
         self.dia_semana = dia_semana
         self.hora = hora
         self.local = local
-        self.dt_atualizacao = datetime.now()
+        self.dt_atualizacao = datetime.datetime.now().strftime('%Y-%m-%d %H:%M')
         
     def __str__(self):
-        return f'Agendamento: {self.paciente.name} - {self.profissional.nome} - {self.dia_semana} - {self.hora} - {self.local} - {self.dt_atualizacao}'
+        return f'Agendamento: {self.paciente} - {self.profissional} - {self.dia_semana} - {self.hora} - {self.local} - {self.dt_atualizacao}'
