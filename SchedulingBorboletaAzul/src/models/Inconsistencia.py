@@ -109,3 +109,21 @@ def verificar_inconsistencias_profissionais(profissionais_df, dispon_profissiona
         )
 
     return inconsistencias
+
+def verificar_inconsistencias_nao_agendamento(pacientes_nao_agendado, profissionais_nao_agendado):
+    inconsistencias = []
+    if len(pacientes_nao_agendado) > 0:
+        for paciente in pacientes_nao_agendado:
+            inconsistencias.append(Inconsistencia(
+                tabela='Solução',
+                tipo='aviso',
+                mensagem=f"Paciente {paciente} não foi agendado."
+            ))
+    if len(profissionais_nao_agendado) > 0:
+        for profissional in profissionais_nao_agendado:
+            inconsistencias.append(Inconsistencia(
+                tabela='Solução',
+                tipo='aviso',
+                mensagem=f"Profissional {profissional} não foi agendado."
+            ))
+    return inconsistencias

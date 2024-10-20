@@ -1,6 +1,6 @@
 from pulp import LpMaximize, LpProblem, LpVariable, lpSum, LpStatus
 
-def otimizar_agendamentos(pacientes, profissionais, kpi=None):
+def otimizar_agendamentos(pacientes, profissionais, kpi):
     # Cria o problema de otimização
     prob = LpProblem("Otimização_de_agendamentos", LpMaximize)
     
@@ -15,7 +15,7 @@ def otimizar_agendamentos(pacientes, profissionais, kpi=None):
 
     # Função objetivo: maximizar o número de agendamentos priorizando os pacientes com mais sessões anteriores (caso seja fornecido)
     if kpi is not None:
-        prob += lpSum([kpi[p.nome] * x[(p.nome, pr.nome, data, hora, local)] 
+        prob += lpSum([(kpi.get((p.nome, pr.nome), 0)* 2 + 1)* x[(p.nome, pr.nome, data, hora, local)] 
                         for p in pacientes 
                         for pr in profissionais 
                         for data in p.disponibilidade.keys() 
@@ -83,6 +83,20 @@ def otimizar_agendamentos(pacientes, profissionais, kpi=None):
             if all([not pr.pode_atender(data, hora, p.tipo) for data in p.disponibilidade.keys() for hora in p.disponibilidade[data]]):
                 motivos.append("Fora da disponibilidade do profissional.")
             pacientes_nao_agendados.append((p.nome, motivos))
+            
+    # Verifica profissionais não agendados
+    profissionais_nao_agendados = []
+    for pr in profissionais:
+        agendado = False
+        for p in pacientes:
+            for data in p.disponibilidade.keys():
+                for hora in p.disponibilidade[data]:
+                    for local in p.localidade.keys():
+                        if x[(p.nome, pr.nome, data, hora, local)].varValue == 1:
+                            agendado = True
+                            break  # Se foi agendado, não precisa continuar verificando este profissional
+        if not agendado:
+            profissionais_nao_agendados.append(pr.nome)
     
     # Retorna o resultado
-    return prob, x, pacientes_nao_agendados
+    return prob, x, pacientes_nao_agendados, profissionais_nao_agendados

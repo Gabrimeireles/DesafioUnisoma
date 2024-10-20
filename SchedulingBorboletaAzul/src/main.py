@@ -36,19 +36,7 @@ def executar_terminal(file_path):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Ferramenta de Agendamento Psicológico")
-    parser.add_argument('--file', type=str, help="Caminho para o arquivo Excel")
-    parser.add_argument('--mode', type=str, default="terminal", help="Modo de execução: terminal ou streamlit")
-
-    args = parser.parse_args()
-    print(args)
-
-    if args.mode == "terminal":
-        dashboard() # Executa o dashboard do Streamlit
-        if args.file:
-            executar_terminal(args.file)
-        else:
-            print("Por favor, forneça o caminho para o arquivo Excel usando o argumento --file.")
+    dashboard() # Executa o dashboard do Streamlit
 
 
 if __name__ == '__main__':

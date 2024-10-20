@@ -13,8 +13,8 @@ class ExcelHandler:
         dispon_profissional = pd.read_excel(self.workbook, 'DisponProfissional')
         local_profissional = pd.read_excel(self.workbook, 'LocalProfissional')
         
-        if 'KPIAtendimento' in self.workbook.sheet_names:
-            kpi_atendimento = pd.read_excel(self.workbook, 'KPIAtendimento')
+        if 'numSessõesPaciente' in self.workbook.sheet_names:
+            kpi_atendimento = pd.read_excel(self.workbook, 'numSessõesPaciente')
         else:
             kpi_atendimento = None
         

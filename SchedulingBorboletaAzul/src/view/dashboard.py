@@ -34,14 +34,14 @@ def dashboard():
                     
             else:
                 agendamentos = resultado['agendamentos']
-                pacientes_nao_agendados = resultado['pacientes_nao_agendados']
+                nao_agendados = resultado['inconsistencias']
                 st.success('Otimização dos agendamentos realizada com sucesso!')
                 
                 st.subheader('Agendamentos realizados:')
                 mostrar_agendamentos(agendamentos)
                 
-                if pacientes_nao_agendados:
-                    st.subheader('Pacientes não agendados:')
-                    st.write(pacientes_nao_agendados)
+                if nao_agendados:
+                    for i, nao_agendados in enumerate(nao_agendados, start=1):
+                        st.warning(f"{i}. Tabela: {nao_agendados.tabela} | {nao_agendados.tipo.upper()} | Mensagem: {nao_agendados.mensagem}")
         else:
             st.error('Selecione um arquivo para executar a otimização dos agendamentos.')

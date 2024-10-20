@@ -1,7 +1,7 @@
 import pandas as pd
 from models.profissional import Profissional
 from models.paciente import Paciente
-from models.Inconsistencia import verificar_inconsistencias_pacientes, verificar_inconsistencias_profissionais
+from models.Inconsistencia import verificar_inconsistencias_nao_agendamento, verificar_inconsistencias_pacientes, verificar_inconsistencias_profissionais
 from models.agendamento import Agendamento
 from services.Optimizer import otimizar_agendamentos
 from services.ExcelHandler import ExcelHandler
@@ -102,6 +102,8 @@ def processar_agendamentos(file_path):
     excel_handler = ExcelHandler(file_path)
     idade_paciente, dispon_patiente, local_paciente, regra_profissional, dispon_profissional, local_profissional, kpi_atendimento = excel_handler.ler_planilha()
     
+    print('KPI Atendimento:', kpi_atendimento)
+    
     inconsistencias = verificar_inconsistencias_pacientes(idade_paciente, dispon_patiente, local_paciente)
     inconsistencias += verificar_inconsistencias_profissionais(regra_profissional, dispon_profissional, local_profissional)
     
@@ -114,7 +116,11 @@ def processar_agendamentos(file_path):
     pacientes = traduzir_pacientes(idade_paciente, dispon_patiente, local_paciente)
     profissionais = traduzir_profissionais(regra_profissional, dispon_profissional, local_profissional)
     
-    prob, x, pacientes_nao_agendados = otimizar_agendamentos(pacientes, profissionais)
+    prob, x, pacientes_nao_agendados, profissionais_nao_agendados = otimizar_agendamentos(pacientes, profissionais, kpi_atendimento)
+    
+    inconsistencias_nao_agendamento = verificar_inconsistencias_nao_agendamento(pacientes_nao_agendados,profissionais_nao_agendados)
+    df_inconsistencia_nao_agendamento = inconsistencias_to_df(inconsistencias_nao_agendamento)
+    excel_handler.escrever_inconsistencia(df_inconsistencia_nao_agendamento)
     
     agendamentos = []            
     for var in prob.variables():
@@ -127,4 +133,30 @@ def processar_agendamentos(file_path):
     df_solução = agendamento_to_df(agendamentos)
     excel_handler.escrever_solucao(df_solução)
     
-    return {'status': 'sucesso', 'agendamentos': agendamentos, 'pacientes_nao_agendados': pacientes_nao_agendados}
+    data_atual = pd.Timestamp.now()
+    if kpi_atendimento is None: # Escrevendo KPI de atendimento pela primeira vez
+        kpi_atendimento = pd.DataFrame(columns=['paciente', 'profissional', 'sessões', 'dt_atualizacao'])
+        kpi_atendimento['paciente'] = [ag.paciente for ag in agendamentos]
+        kpi_atendimento['profissional'] = [ag.profissional for ag in agendamentos]
+        kpi_atendimento['sessões'] = 1
+        kpi_atendimento['dt_atualizacao'] = pd.Timestamp.now().strftime('%Y-%m-%d %H:%M')
+        excel_handler.escrever_kpi(kpi_atendimento, 'numSessõesPaciente')
+    else: # Atualizando KPI de atendimento
+        # Verificando se a última atualização foi feita no mesmo dia
+        ultima_atualizacao = pd.to_datetime(kpi_atendimento['dt_atualizacao'].max(), format='%Y-%m-%d %H:%M')
+        if ultima_atualizacao.isocalendar()[1] == data_atual.isocalendar()[1]:
+            kpi_atendimento = pd.DataFrame(columns=['paciente', 'profissional', 'sessões', 'dt_atualizacao'])
+            kpi_atendimento['paciente'] = [ag.paciente for ag in agendamentos]
+            kpi_atendimento['profissional'] = [ag.profissional for ag in agendamentos]
+            kpi_atendimento['sessões'] = 1
+            kpi_atendimento['dt_atualizacao'] = data_atual.strftime('%Y-%m-%d %H:%M')
+        else: # Atualizando sessões de atendimento
+            for ag in agendamentos:
+                index = kpi_atendimento[(kpi_atendimento['paciente'] == ag.paciente) & (kpi_atendimento['profissional'] == ag.profissional)].index
+                if not index.empty:
+                    kpi_atendimento.loc[index, 'sessões'] += 1
+                else:
+                    kpi_atendimento = kpi_atendimento.append({'paciente': ag.paciente, 'profissional': ag.profissional, 'sessões': 1}, ignore_index=True)
+        excel_handler.escrever_kpi(kpi_atendimento, 'KPIAtendimento')
+    
+    return {'status': 'sucesso', 'agendamentos': agendamentos, 'inconsistencias': inconsistencias_nao_agendamento}
