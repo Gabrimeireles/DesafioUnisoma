@@ -1,4 +1,5 @@
 import pandas as pd
+import os
 from models.profissional import Profissional
 from models.paciente import Paciente
 from models.Inconsistencia import verificar_inconsistencias_nao_agendamento, verificar_inconsistencias_pacientes, verificar_inconsistencias_profissionais
@@ -98,11 +99,12 @@ def inconsistencias_to_df(inconsistencias):
     return pd.DataFrame(dados)
 
 
-def processar_agendamentos(file_path):
+def processar_agendamentos(file_path, considerar_sessoes_anteriores):
     excel_handler = ExcelHandler(file_path)
     idade_paciente, dispon_patiente, local_paciente, regra_profissional, dispon_profissional, local_profissional, kpi_atendimento = excel_handler.ler_planilha()
     
-    print('KPI Atendimento:', kpi_atendimento)
+    if not considerar_sessoes_anteriores:
+        kpi_atendimento = None
     
     inconsistencias = verificar_inconsistencias_pacientes(idade_paciente, dispon_patiente, local_paciente)
     inconsistencias += verificar_inconsistencias_profissionais(regra_profissional, dispon_profissional, local_profissional)
@@ -118,7 +120,7 @@ def processar_agendamentos(file_path):
     
     prob, x, pacientes_nao_agendados, profissionais_nao_agendados = otimizar_agendamentos(pacientes, profissionais, kpi_atendimento)
     
-    inconsistencias_nao_agendamento = verificar_inconsistencias_nao_agendamento(pacientes_nao_agendados,profissionais_nao_agendados)
+    inconsistencias_nao_agendamento = verificar_inconsistencias_nao_agendamento(pacientes_nao_agendados, profissionais_nao_agendados)
     df_inconsistencia_nao_agendamento = inconsistencias_to_df(inconsistencias_nao_agendamento)
     excel_handler.escrever_inconsistencia(df_inconsistencia_nao_agendamento)
     
@@ -132,17 +134,19 @@ def processar_agendamentos(file_path):
     
     df_solução = agendamento_to_df(agendamentos)
     excel_handler.escrever_solucao(df_solução)
-    
+
+    # Salvando os dados em CSV
+    salvar_dados_em_csv(pacientes, profissionais, df_solução, df_inconsistencia, kpi_atendimento)
+
     data_atual = pd.Timestamp.now()
-    if kpi_atendimento is None: # Escrevendo KPI de atendimento pela primeira vez
+    if kpi_atendimento is None:  # Escrevendo KPI de atendimento pela primeira vez
         kpi_atendimento = pd.DataFrame(columns=['paciente', 'profissional', 'sessões', 'dt_atualizacao'])
         kpi_atendimento['paciente'] = [ag.paciente for ag in agendamentos]
         kpi_atendimento['profissional'] = [ag.profissional for ag in agendamentos]
         kpi_atendimento['sessões'] = 1
         kpi_atendimento['dt_atualizacao'] = pd.Timestamp.now().strftime('%Y-%m-%d %H:%M')
         excel_handler.escrever_kpi(kpi_atendimento, 'numSessõesPaciente')
-    else: # Atualizando KPI de atendimento
-        # Verificando se a última atualização foi feita no mesmo dia
+    else:  # Atualizando KPI de atendimento
         ultima_atualizacao = pd.to_datetime(kpi_atendimento['dt_atualizacao'].max(), format='%Y-%m-%d %H:%M')
         if ultima_atualizacao.isocalendar()[1] == data_atual.isocalendar()[1]:
             kpi_atendimento = pd.DataFrame(columns=['paciente', 'profissional', 'sessões', 'dt_atualizacao'])
@@ -150,7 +154,7 @@ def processar_agendamentos(file_path):
             kpi_atendimento['profissional'] = [ag.profissional for ag in agendamentos]
             kpi_atendimento['sessões'] = 1
             kpi_atendimento['dt_atualizacao'] = data_atual.strftime('%Y-%m-%d %H:%M')
-        else: # Atualizando sessões de atendimento
+        else:  # Atualizando sessões de atendimento
             for ag in agendamentos:
                 index = kpi_atendimento[(kpi_atendimento['paciente'] == ag.paciente) & (kpi_atendimento['profissional'] == ag.profissional)].index
                 if not index.empty:
@@ -160,3 +164,35 @@ def processar_agendamentos(file_path):
         excel_handler.escrever_kpi(kpi_atendimento, 'KPIAtendimento')
     
     return {'status': 'sucesso', 'agendamentos': agendamentos, 'inconsistencias': inconsistencias_nao_agendamento}
+
+def salvar_dados_em_csv(pacientes, profissionais, df_solucao, df_inconsistencia, kpi_atendimento):
+    pasta_dados = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'persist'))
+    os.makedirs(pasta_dados, exist_ok=True)
+
+    # Salvando pacientes
+    df_pacientes = pd.DataFrame([{
+        'nome': p.nome,
+        'idade': p.idade,
+        'localidade': p.localidade,
+        'tipo': p.tipo
+    } for p in pacientes])
+    df_pacientes.to_csv(os.path.join(pasta_dados, f'pacientes.csv'), index=False)
+
+    # Salvando profissionais
+    df_profissionais = pd.DataFrame([{
+        'nome': pr.nome,
+        'horas_semana': pr.horas_semana,
+        'faixa_atendimento': pr.faixa_atendimento,
+        'localidade': pr.localidade
+    } for pr in profissionais])
+    df_profissionais.to_csv(os.path.join(pasta_dados, f'profissionais.csv'), index=False)
+
+    # Salvando solução
+    df_solucao.to_csv(os.path.join(pasta_dados, f'solucao.csv'), index=False)
+
+    # Salvando inconsistências
+    df_inconsistencia.to_csv(os.path.join(pasta_dados, f'inconsistencias.csv'), index=False)
+
+    # Salvando KPI
+    if kpi_atendimento is not None:
+        kpi_atendimento.to_csv(os.path.join(pasta_dados, f'numSessõesPaciente.csv'), index=False)

@@ -1,0 +1,11 @@
+nome,idade,localidade,tipo
+PAC A,10,"{'virtual_epsi': ['virtual_epsi', 'virtual'], 'UNIDADE 1': ['UNIDADE 1', 'virtual'], 'UNIDADE 2': ['virtual'], 'UNIDADE 3': ['virtual'], 'UNIDADE 4': ['virtual']}",infatil
+PAC B,40,"{'virtual_epsi': ['virtual_epsi', 'virtual'], 'UNIDADE 1': ['UNIDADE 1', 'virtual'], 'UNIDADE 2': ['virtual'], 'UNIDADE 3': ['virtual'], 'UNIDADE 4': ['virtual']}",adulto
+PAC C,46,"{'virtual_epsi': ['virtual_epsi', 'virtual'], 'UNIDADE 1': ['UNIDADE 1', 'virtual'], 'UNIDADE 2': ['virtual'], 'UNIDADE 3': ['UNIDADE 3', 'virtual'], 'UNIDADE 4': ['virtual']}",adulto
+PAC D,14,"{'virtual_epsi': ['virtual_epsi', 'virtual'], 'UNIDADE 1': ['UNIDADE 1', 'virtual'], 'UNIDADE 2': ['virtual'], 'UNIDADE 3': ['UNIDADE 3', 'virtual'], 'UNIDADE 4': ['virtual']}",adolescente
+PAC E,16,"{'virtual_epsi': [], 'UNIDADE 1': ['UNIDADE 1'], 'UNIDADE 2': [], 'UNIDADE 3': ['UNIDADE 3'], 'UNIDADE 4': []}",adolescente
+PAC_F,19,"{'virtual_epsi': ['virtual_epsi', 'virtual'], 'UNIDADE 1': ['virtual'], 'UNIDADE 2': ['virtual'], 'UNIDADE 3': ['UNIDADE 3', 'virtual'], 'UNIDADE 4': ['virtual']}",adulto
+PAC_G,9,"{'virtual_epsi': [], 'UNIDADE 1': ['UNIDADE 1'], 'UNIDADE 2': ['UNIDADE 2'], 'UNIDADE 3': [], 'UNIDADE 4': []}",infatil
+PAC_H,10,"{'virtual_epsi': [], 'UNIDADE 1': ['UNIDADE 1'], 'UNIDADE 2': ['UNIDADE 2'], 'UNIDADE 3': ['UNIDADE 3'], 'UNIDADE 4': []}",infatil
+PAC_I,25,"{'virtual_epsi': ['virtual_epsi', 'virtual'], 'UNIDADE 1': ['UNIDADE 1', 'virtual'], 'UNIDADE 2': ['UNIDADE 2', 'virtual'], 'UNIDADE 3': ['UNIDADE 3', 'virtual'], 'UNIDADE 4': ['virtual']}",adulto
+PAC_J,13,"{'virtual_epsi': ['virtual_epsi', 'virtual'], 'UNIDADE 1': ['UNIDADE 1', 'virtual'], 'UNIDADE 2': ['UNIDADE 2', 'virtual'], 'UNIDADE 3': ['UNIDADE 3', 'virtual'], 'UNIDADE 4': ['virtual']}",adolescente

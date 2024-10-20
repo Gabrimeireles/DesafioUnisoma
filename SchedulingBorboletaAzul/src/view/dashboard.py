@@ -1,4 +1,5 @@
 import streamlit as st
+import pandas as pd
 import os
 
 from utils.helpers import agendamento_to_df, processar_agendamentos
@@ -14,8 +15,9 @@ def mostrar_agendamentos(agendamentos):
 def dashboard():   
     st.title('Dashboard do Gerenciador de Agendamentos dos Atendimentos')
 
-    pasta_dados = '../data'
+    pasta_dados = os.path.abspath(os.path.join(os.path.dirname(__file__), '..\..', 'data'))
     arquivos = listar_arquivos(pasta_dados)
+    considerar_sessoes_anteriores = st.checkbox('Considerar sessões anteriores', value=True)
     arquivo_selecionado = st.selectbox('Selecione o arquivo de dados', arquivos)
 
     if st.button('Executar Otimização dos Agendamentos'):
@@ -24,7 +26,7 @@ def dashboard():
             st.write('Arquivo selecionado:', arquivo_selecionado)
             
             caminho_arquivo = os.path.join(pasta_dados, arquivo_selecionado)
-            resultado = processar_agendamentos(caminho_arquivo)
+            resultado = processar_agendamentos(caminho_arquivo, considerar_sessoes_anteriores)
             
             if resultado['status'] == 'erro':
                 inconsistencias = resultado['inconsistencias']

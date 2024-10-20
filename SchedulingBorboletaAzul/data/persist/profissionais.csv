@@ -1,0 +1,6 @@
+nome,horas_semana,faixa_atendimento,localidade
+PROF A,2,"['infantil', 'adolescente', 'adulto']","{'virtual_epsi': [], 'UNIDADE 1': [], 'UNIDADE 2': ['UNIDADE 2'], 'UNIDADE 3': ['UNIDADE 3'], 'UNIDADE 4': ['UNIDADE 4']}"
+PROF B,3,"['infantil', 'adolescente']","{'virtual_epsi': ['virtual_epsi', 'virtual'], 'UNIDADE 1': ['virtual'], 'UNIDADE 2': ['UNIDADE 2', 'virtual'], 'UNIDADE 3': ['virtual'], 'UNIDADE 4': ['UNIDADE 4', 'virtual']}"
+PROF_C,1,"['adolescente', 'adulto']","{'virtual_epsi': [], 'UNIDADE 1': ['UNIDADE 1'], 'UNIDADE 2': [], 'UNIDADE 3': [], 'UNIDADE 4': []}"
+PROF_D,2,['adulto'],"{'virtual_epsi': ['virtual_epsi', 'virtual'], 'UNIDADE 1': ['UNIDADE 1', 'virtual'], 'UNIDADE 2': ['UNIDADE 2', 'virtual'], 'UNIDADE 3': ['UNIDADE 3', 'virtual'], 'UNIDADE 4': ['UNIDADE 4', 'virtual']}"
+PROF_E,1,['adolescente'],"{'virtual_epsi': ['virtual_epsi', 'virtual'], 'UNIDADE 1': ['virtual'], 'UNIDADE 2': ['virtual'], 'UNIDADE 3': ['virtual'], 'UNIDADE 4': ['virtual']}"

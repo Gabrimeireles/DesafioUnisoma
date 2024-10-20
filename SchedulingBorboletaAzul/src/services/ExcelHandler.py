@@ -30,4 +30,4 @@ class ExcelHandler:
     
     def escrever_inconsistencia(self, inconsistencia):
         with pd.ExcelWriter(self.file_path, mode='a', if_sheet_exists='replace') as writer:
-            inconsistencia.to_excel(writer, sheet_name='Inconsistencia')
+            inconsistencia.to_excel(writer, sheet_name='Inconsistência')
