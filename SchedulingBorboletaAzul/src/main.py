@@ -1,6 +1,7 @@
+from models.Inconsistencia import verificar_inconsistencias_pacientes, verificar_inconsistencias_profissionais
 from models.agendamento import Agendamento
 from services.Optimizer import otimizar_agendamentos
-from utils.helpers import agendamento_to_df, traduzir_pacientes, traduzir_profissional
+from utils.helpers import agendamento_to_df, traduzir_pacientes, traduzir_profissionais, inconsistencias_to_df
 from services.ExcelHandler import ExcelHandler
 from pulp import LpStatus
 
@@ -9,8 +10,24 @@ def main():
     excel_handler = ExcelHandler('../data/cenario_4.xlsx')
     idade_paciente, dispon_patiente, local_paciente, regra_profissional, dispon_profissional, local_profissional, kpi_atendimento = excel_handler.ler_planilha()
     
+    inconsistencias = verificar_inconsistencias_pacientes(idade_paciente, dispon_patiente, local_paciente)
+    inconsistencias += verificar_inconsistencias_profissionais(regra_profissional, dispon_profissional, local_profissional)
+    
+    df_inconsistencia = inconsistencias_to_df(inconsistencias)
+    excel_handler.escrever_inconsistencia(df_inconsistencia)
+    
+    if any(inc.tipo == 'erro' for inc in inconsistencias):
+        print('************************************')
+        print('Erros encontrados na planilha!')
+        print(f'Arquivo: {excel_handler.file_path}')
+        print(f'Número total de erros: {len(inconsistencias)}')
+        print('\nDetalhes dos erros encontrados:')
+        for i, inconsistencia in enumerate(inconsistencias, start=1):
+            print(f"{i}. Tabela: {inconsistencia.tabela} | Tipo: {inconsistencia.tipo.upper()} | Mensagem: {inconsistencia.mensagem}")
+        return
+        
     pacientes = traduzir_pacientes(idade_paciente, dispon_patiente, local_paciente)
-    profissionais = traduzir_profissional(regra_profissional, dispon_profissional, local_profissional)
+    profissionais = traduzir_profissionais(regra_profissional, dispon_profissional, local_profissional)
     
     prob, x, pacientes_nao_agendados = otimizar_agendamentos(pacientes, profissionais)
     

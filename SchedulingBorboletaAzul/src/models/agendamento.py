@@ -1,6 +1,5 @@
 import datetime
 
-
 class Agendamento:
     def __init__(self, paciente, profissional, dia_semana, hora, local):
         self.paciente = paciente
