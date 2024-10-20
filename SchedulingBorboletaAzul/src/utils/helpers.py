@@ -1,6 +1,10 @@
 import pandas as pd
 from models.profissional import Profissional
 from models.paciente import Paciente
+from models.Inconsistencia import verificar_inconsistencias_pacientes, verificar_inconsistencias_profissionais
+from models.agendamento import Agendamento
+from services.Optimizer import otimizar_agendamentos
+from services.ExcelHandler import ExcelHandler
 
 # Funções principais para traduzir pacientes e profissionais
 def traduzir_pacientes(idade_paciente_df, dispon_paciente_df, local_paciente_df):
@@ -92,4 +96,35 @@ def inconsistencias_to_df(inconsistencias):
         'dt_atualizacao': [inconsistencia.dt_atualizacao for inconsistencia in inconsistencias]
     }
     return pd.DataFrame(dados)
+
+
+def processar_agendamentos(file_path):
+    excel_handler = ExcelHandler(file_path)
+    idade_paciente, dispon_patiente, local_paciente, regra_profissional, dispon_profissional, local_profissional, kpi_atendimento = excel_handler.ler_planilha()
     
+    inconsistencias = verificar_inconsistencias_pacientes(idade_paciente, dispon_patiente, local_paciente)
+    inconsistencias += verificar_inconsistencias_profissionais(regra_profissional, dispon_profissional, local_profissional)
+    
+    df_inconsistencia = inconsistencias_to_df(inconsistencias)
+    excel_handler.escrever_inconsistencia(df_inconsistencia)
+    
+    if any(inc.tipo == 'erro' for inc in inconsistencias):
+        return {'status': 'erro', 'inconsistencias': inconsistencias}
+    
+    pacientes = traduzir_pacientes(idade_paciente, dispon_patiente, local_paciente)
+    profissionais = traduzir_profissionais(regra_profissional, dispon_profissional, local_profissional)
+    
+    prob, x, pacientes_nao_agendados = otimizar_agendamentos(pacientes, profissionais)
+    
+    agendamentos = []            
+    for var in prob.variables():
+        if var.varValue == 1:
+            for chave, var_x in x.items():
+                if var.name == var_x.name:
+                    paciente, profissional, data, hora, local = chave
+                    agendamentos.append(Agendamento(paciente, profissional, data, hora, local))
+    
+    df_solução = agendamento_to_df(agendamentos)
+    excel_handler.escrever_solucao(df_solução)
+    
+    return {'status': 'sucesso', 'agendamentos': agendamentos, 'pacientes_nao_agendados': pacientes_nao_agendados}

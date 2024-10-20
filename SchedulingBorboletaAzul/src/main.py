@@ -1,53 +1,55 @@
-from models.Inconsistencia import verificar_inconsistencias_pacientes, verificar_inconsistencias_profissionais
-from models.agendamento import Agendamento
-from services.Optimizer import otimizar_agendamentos
-from utils.helpers import agendamento_to_df, traduzir_pacientes, traduzir_profissionais, inconsistencias_to_df
-from services.ExcelHandler import ExcelHandler
-from pulp import LpStatus
+import argparse
+from utils.helpers import processar_agendamentos
+from view.dashboard import dashboard
 
-
-def main():
-    excel_handler = ExcelHandler('../data/cenario_4.xlsx')
-    idade_paciente, dispon_patiente, local_paciente, regra_profissional, dispon_profissional, local_profissional, kpi_atendimento = excel_handler.ler_planilha()
+def executar_terminal(file_path):
+    resultado = processar_agendamentos(file_path)
     
-    inconsistencias = verificar_inconsistencias_pacientes(idade_paciente, dispon_patiente, local_paciente)
-    inconsistencias += verificar_inconsistencias_profissionais(regra_profissional, dispon_profissional, local_profissional)
-    
-    df_inconsistencia = inconsistencias_to_df(inconsistencias)
-    excel_handler.escrever_inconsistencia(df_inconsistencia)
-    
-    if any(inc.tipo == 'erro' for inc in inconsistencias):
+    if resultado['status'] == 'erro':
+        inconsistencias = resultado['inconsistencias']
         print('************************************')
         print('Erros encontrados na planilha!')
-        print(f'Arquivo: {excel_handler.file_path}')
+        print(f'Arquivo: {file_path}')
         print(f'Número total de erros: {len(inconsistencias)}')
         print('\nDetalhes dos erros encontrados:')
         for i, inconsistencia in enumerate(inconsistencias, start=1):
             print(f"{i}. Tabela: {inconsistencia.tabela} | Tipo: {inconsistencia.tipo.upper()} | Mensagem: {inconsistencia.mensagem}")
+        print('Execução interrompida.')
         return
+    else:
+        agendamentos = resultado['agendamentos']
+        pacientes_nao_agendados = resultado['pacientes_nao_agendados']
         
-    pacientes = traduzir_pacientes(idade_paciente, dispon_patiente, local_paciente)
-    profissionais = traduzir_profissionais(regra_profissional, dispon_profissional, local_profissional)
-    
-    prob, x, pacientes_nao_agendados = otimizar_agendamentos(pacientes, profissionais)
-    
-    agendamentos = []            
-    for var in prob.variables():
-        if var.varValue == 1:
-            for chave, var_x in x.items():
-                if var.name == var_x.name:
-                    paciente, profissional, data, hora, local = chave
-                    agendamentos.append(Agendamento(paciente, profissional, data, hora, local))
+        print('************************************')
+        print('Pacientes Agendados:')
+        for paciente in agendamentos:
+            print(paciente)
+        print('************************************')
+        print('Execução concluída com sucesso.')
+        
+        print('************************************')
+        print('Pacientes não agendados:')
+        for paciente in pacientes_nao_agendados:
+            print(paciente)
+        print('************************************')
+        print('Execução concluída com sucesso.')
 
-    df_solução = agendamento_to_df(agendamentos)
-    excel_handler.escrever_solucao(df_solução)
-                    
-    print('************************************')
-    print('Pacientes não agendados:')
-    for paciente in pacientes_nao_agendados:
-        print(paciente)
-    print('************************************')
-    
-        
+
+def main():
+    parser = argparse.ArgumentParser(description="Ferramenta de Agendamento Psicológico")
+    parser.add_argument('--file', type=str, help="Caminho para o arquivo Excel")
+    parser.add_argument('--mode', type=str, default="terminal", help="Modo de execução: terminal ou streamlit")
+
+    args = parser.parse_args()
+    print(args)
+
+    if args.mode == "terminal":
+        dashboard() # Executa o dashboard do Streamlit
+        if args.file:
+            executar_terminal(args.file)
+        else:
+            print("Por favor, forneça o caminho para o arquivo Excel usando o argumento --file.")
+
+
 if __name__ == '__main__':
     main()
